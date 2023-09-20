@@ -42,15 +42,15 @@ async def text(message: types.Message) -> None:
     text = ' '.join(message.text.split()[1:-1])
 
     if is_admin(message) and text == 'СПИСОК КОШЕК':
-        for cat in range(1, number_of_cats+1):
-            del_cat_kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='🔼 удалить 😿', callback_data=f'del{cat}')]])
-            await message.answer_photo(FSInputFile(f'cats/cat{cat}.jpg'), 'cat'+str(cat)+'.jpg', reply_markup=del_cat_kb)
+        for cat in cats_list:
+            del_cat_kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='🔼 УДАЛИТЬ 😿', callback_data=cat)]])
+            await message.answer_photo(FSInputFile(f'cats/{cat}'), cat, reply_markup=del_cat_kb)
             
     else:
         if message.chat.id not in users:
                 users[message.chat.id] = {'cats': []}
 
-        cat = f'cat{randint(1, number_of_cats)}.jpg'
+        cat = choice(cats_list)
 
         while cat in users[message.chat.id]['cats']:
             if len(users[message.chat.id]['cats']) == number_of_cats:
@@ -74,6 +74,14 @@ async def add_cat(message):
     cats_list = get_cats_list()
     number_of_cats += 1
 
+@dp.callback_query()
+async def del_cat(callback) -> None:
+    global cats_list
+
+    os.remove(f'cats/{callback.data}')
+    cats_list = get_cats_list()
+
+    await callback.answer(text='Удалено!', show_alert=True)
 
 async def main() -> None:
     # Initialize Bot instance with a default parse mode which will be passed to all API calls
