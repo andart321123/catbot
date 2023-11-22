@@ -1,9 +1,10 @@
 import asyncio
-# import sys
+import logging
+import sys
 import os
 from json import load, dump
 from glob import glob
-from random import choice
+from random import randint, choice
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
@@ -17,7 +18,6 @@ ADMIN_ID = os.getenv("ADMIN_ID")
 
 dp = Dispatcher()
 message_type = ''
-
 
 number_of_cats = len(glob('./cats/*'))
 users = {}
@@ -50,17 +50,18 @@ async def command_start_handler(message: Message) -> None:
     if is_admin(message) == 'admin' or is_admin(message) == 'root':
         await message.answer(f"Режим администратора - {hbold(message.from_user.full_name)}!", reply_markup=admin_kb if is_admin(message)=='admin' else root_kb)
     else:
-        await message.answer(f"Привет, {hbold(message.from_user.full_name)}! Чтобы добавить свои фотографии, отправляй мне их!", reply_markup=user_kb)
+        await message.answer(f"Привет, {hbold(message.from_user.full_name)}! Чтобы добавить свои фотографии, отправляй мне их {hbold('ПО ОДНОЙ!!!!!!')}", reply_markup=user_kb)
 
 
 @dp.message(F.text)
 async def text(message: types.Message) -> None:
     global message_type
+    print('text wert')
 
     text = ' '.join(message.text.split()[1:-1])
 
     if message.text.isdigit():
-        print('!!! add admin')
+        print('!!!')
     
 
         if is_admin(message) == 'root' and message_type == 'add_admin':
@@ -72,23 +73,20 @@ async def text(message: types.Message) -> None:
         print(admins)
 
     elif (is_admin(message) == 'root' or is_admin(message) == 'admin') and text == 'СПИСОК КОШЕК':
-        print('### cats list')
+        print('###')
         await message.answer(f'Всего {number_of_cats} котов!')
         for cat in cats_list:
             del_cat_kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='🔼 УДАЛИТЬ 😿', callback_data=cat)]])
             await message.answer_photo(FSInputFile(f'cats/{cat}'), reply_markup=del_cat_kb)
 
     elif is_admin(message) == 'root' and text == 'АДМИНИСТРАТОРЫ':
-        print('@@@ admins')
+        print('@@@')
         await message.answer('root=' + admins['root'], reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='Добавить', callback_data='add_admin')]]))
         for admin in admins['admins']:
             await message.answer(admin, reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='Удалить', callback_data=f'del_admin_id_{admin}')]]))
-    
-    elif text == 'ШЛЁПА И ПЕЛЬМЕНИ':
-        await message.reply('t.me/test_321123bot/shlepa')
-
+            
     else:
-        print('$$$$ cat')
+        print('$$$$')
         if message.chat.id not in users:
             users[message.chat.id] = {'cats': cats_list.copy()}
 
@@ -104,15 +102,19 @@ async def text(message: types.Message) -> None:
 
 @dp.message(F.photo)
 async def add_cat(message):
-    global cats_list
-    global number_of_cats
-    print('add cat')
+    global number_of_cats, cats_list
+    cats = message.photo
 
-    photos = message.photo
-
-    cats_list += f'cats/cat{number_of_cats}.jpg'
-    number_of_cats += 1
-    await bot.download(photos[-1], f'cats/cat{number_of_cats}.jpg')
+    for cat in cats:
+        print('number_of_cats: ', number_of_cats)
+        cat_file = f'cats/cat{number_of_cats + 1}.jpg'
+        await bot.download(cat, cat_file)
+        number_of_cats += 1
+    
+    cats_list = get_cats_list()
+    
+    if is_admin(message) != 'root':
+        await bot.send_message(5724447197, text='Новые коты загружены!!!')
 
 @dp.callback_query()
 async def del_cat_and_admin(callback) -> None:
@@ -121,19 +123,15 @@ async def del_cat_and_admin(callback) -> None:
     if 'cat' in callback.data:
         os.remove(f'cats/{callback.data}')
         cats_list = get_cats_list()
-        await callback.answer(text='Удалено!', show_alert=True)
-        print('del cat')
+        await callback.answer(text='Удалено!', show_alert=True) 
     elif callback.data[:13] == 'del_admin_id_':
-        print('del admin')
         del admins['admins'][admins['admins'].index(callback.data[13:])]
         with open('admins.json', 'w') as f:
             dump(admins, f)
         await callback.answer(text='Удалено!', show_alert=True)    
     elif callback.data == 'add_admin':
-        print('add admin')
         await callback.answer(text='Введи id нового администратора!') 
         message_type = 'add_admin'
-
 
 
 async def main() -> None:
@@ -145,5 +143,5 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    # logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     asyncio.run(main())

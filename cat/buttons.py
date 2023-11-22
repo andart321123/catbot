@@ -1,10 +1,9 @@
 from aiogram.types import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 
-user_buttons = [[KeyboardButton(text=' 😺КОШКИ! 🐈')], [KeyboardButton(text='😼 ШЛЁПА И ПЕЛЬМЕНИ 🕹️')]]
+user_buttons = [[KeyboardButton(text=' 😺КОШКИ! 🐈')]]
 
 admin_buttons = [[KeyboardButton(text='😺 КОШКИ! 🐈')],
 				 [KeyboardButton(text='📃 СПИСОК КОШЕК 😸')],
-				 [KeyboardButton(text='😼 ШЛЁПА И ПЕЛЬМЕНИ 🕹️')]
 				 ]
 
 root_buttons = admin_buttons.copy()
